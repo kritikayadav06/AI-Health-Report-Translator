@@ -1,0 +1,29 @@
+# One-command local stack: MongoDB + API + web app.
+#   cp server/.env.example server/.env   (set JWT_SECRET, optionally ANTHROPIC_API_KEY)
+#   docker compose up --build
+# Web: http://localhost:8080   API: http://localhost:5000/api/health
+services:
+  mongo:
+    image: mongo:7
+    volumes: [mongo-data:/data/db]
+    restart: unless-stopped
+
+  server:
+    build: ./server
+    env_file: ./server/.env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/ai_health_reporter
+      CLIENT_ORIGIN: http://localhost:8080
+      NODE_ENV: production
+    depends_on: [mongo]
+    ports: ["5000:5000"]
+    restart: unless-stopped
+
+  client:
+    build: ./client
+    depends_on: [server]
+    ports: ["8080:80"]
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
